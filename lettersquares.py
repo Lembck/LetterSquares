@@ -1,6 +1,7 @@
 import re
 import random
 import copy
+from functools import reduce
 
 vowels = "aeiouy"
 
@@ -80,7 +81,7 @@ class Square:
         return self.horizontal_words() + self.vertical_words() + self.diagonal_words()
 
     def add_letter_in_spot(self, x, y, letter):
-        if self.grid[x][y] != letter:
+        if True or self.grid[x][y] != letter:
             self.grid[x][y] = letter
             return [x, y, letter]
 
@@ -119,11 +120,32 @@ class Square:
             return True
         return False
 
-    def least_not_filled(self):
+    def order_to_fill(self):
         enumerated = list(enumerate(zip(self.possibilities, self.spots_complete)))
         enumerated.sort(key=lambda x: x[1][0])
         enumerated = [index for index, y in enumerated if not y[1]]
-        #print(enumerated)
+
+        #bias to fill diagonals first
+        if 8 in enumerated and 9 in enumerated:
+            eight_index = enumerated.index(8)
+            nine_index = enumerated.index(9)
+            if eight_index <= nine_index:
+                enumerated.pop(nine_index)
+                enumerated.pop(eight_index)
+                enumerated = [8, 9] + enumerated
+            if eight_index > nine_index:
+                enumerated.pop(eight_index)
+                enumerated.pop(nine_index)
+                enumerated = [9, 8] + enumerated
+        elif 8 in enumerated:
+            eight_index = enumerated.index(8)
+            enumerated.pop(eight_index)
+            enumerated = [8] + enumerated
+        elif 9 in enumerated:
+            nine_index = enumerated.index(9)
+            enumerated.pop(nine_index)
+            enumerated = [9] + enumerated
+            
         return enumerated
 
     def undo(self):
@@ -134,29 +156,48 @@ class Square:
                 self.grid[package[0]][package[1]] = "."
         self.set_possibilities()
 
+    def sorted_words(self, index):
+        all_words = []
+        for word in words:
+            self.add_word_in_spot(word, index)
+            self.set_possibilities()
+            score = sum(self.possibilities)
+            all_words.append((word, score))
+        all_words.sort(key=lambda x: x[1], reverse=True)
+        print(all_words)
+        return map(lambda x: x[0], all_words)
+
+
+    def alternate_approach(self):
+        best = (words[0], words[0], 0)
+        eight_words = list(self.sorted_words(8))
+        nine_words =  list(self.sorted_words(9))
+        all_pairs = []
+        for eight_word in eight_words:
+            self.add_word_in_spot(eight_word, 8)
+            for nine_word in nine_words:
+                #print(eight_word, nine_word)
+                self.add_word_in_spot(nine_word, 9)
+                self.set_possibilities()
+                score = reduce(lambda x, y: x * y, self.possibilities)
+                all_pairs.append((eight_word, nine_word, score))
+                if score > best[2]:
+                    best = (eight_word, nine_word, score)
+                    print("new best", best)
+        print(best)
+        all_pairs.sort(key=lambda x: x[2], reverse=True)
+        return all_pairs
+
     def start(self):
-        #word = words[0] #get a word
-        #self.add_word_in_spot(word, 1) #add it somewhere (to the diagonal)
-        #self.add_word_in_spot("ashy", 0)
-        #self.add_word_in_spot("huhs", 6)
-        #self.print_grid()
         self.set_possibilities()
+        self.add_word_in_spot("sons", 8)
+        self.add_word_in_spot("soot", 9)
         self.step(0, [])
-##        self.add_word_in_spot("yaks", 7)
-##        self.print_grid()
-##        print(self.possibilities)
-##        index = self.least_not_filled()
-##        current_word = self.get_words()[index]
-##        choices = re.findall(r'\b' + current_word.replace(".", "\w"), " ".join(words))
-##        print(index, choices)
 
     def add_grid_to_deadends(self):
-        if len(self.deadends) % 100 == 0:
-            print("adding:", len(self.deadends))
-        if self.grid in self.deadends:
-            print("dupe")
-        else:
-            self.deadends.append(copy.deepcopy(self.grid))
+        if len(self.deadends) % 1000 == 0:
+            print("tried:", len(self.deadends))
+        self.deadends.append(copy.deepcopy(self.grid))
         
     def step(self, deep, used_words):
         if deep >= self.deepest:
@@ -167,7 +208,7 @@ class Square:
         if self.grid in self.deadends:
             return
 
-        indexes = self.least_not_filled()
+        indexes = self.order_to_fill()
         for index in indexes:
             current_word = self.get_words()[index]
             choices = re.findall(r'\b' + current_word.replace(".", "\w"), " ".join(words))
@@ -177,7 +218,6 @@ class Square:
                     continue
                 self.add_word_in_spot(choice, index)
                 if self.grid in self.deadends:
-                    print("180")
                     self.undo()
                     continue
                 self.set_possibilities()
@@ -205,4 +245,4 @@ class Square:
         
 
 s = Square()
-#s.start()
+x = s.alternate_approach()
