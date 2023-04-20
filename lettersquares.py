@@ -23,7 +23,10 @@ def add_template(word):
         dictionary[combination] = 1
 
 with open("fourletters.txt", "r") as f:
-    words = f.readline().split(" ")
+    # words = f.readline().split("") read file with spaces
+    words = []
+    for line in f:
+        words.append(line.strip())
     #for word in words:
     #    add_template(word)
 
@@ -245,4 +248,8 @@ class Square:
         
 
 s = Square()
+<<<<<<< HEAD
 x = s.alternate_approach()
+=======
+s.start()
+>>>>>>> 56fbf3c7aa971e0763868f5f38775c5ff9cd73ff
