@@ -1,14 +1,14 @@
 import json
 
 data = None
-with open("precomputed.json", "r+") as f:
-    data = json.load(f)
+#with open("threeletters.json", "r+") as f:
+#    data = json.load(f)
 
 def writeData(data):
-    with open("precomputed.json", "r+") as f:
-        f.seek(0) # reset file position to the beginning.
+    with open("fourletters.json", "w") as f:
+        #f.seek(0) # reset file position to the beginning.
         json.dump(data, f, indent=4)
-        f.truncate() # remove remaining part
+        #f.truncate() # remove remaining part
 
 words = []
 
@@ -59,11 +59,14 @@ def preComputeWord(charsAtIndex, originalWord, word, indexes):
     
 
 def preCompute():
-    charsAtIndex = dict()
+    data = dict()
     for word in words:
         indexes = [0, 1, 2, 3]
-        preComputeWord(charsAtIndex, word, word, indexes)
-    data["charsAtIndex"] = charsAtIndex
+        preComputeWord(data, word, word, indexes)
+    print(data)
+    with open("fourletters.json", "w") as f:
+        #f.seek(0) # reset file position to the beginning.
+        json.dump(data, f, indent=4)
 
 preCompute()
-writeData(data)
+
